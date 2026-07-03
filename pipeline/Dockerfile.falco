@@ -1,0 +1,109 @@
+# =============================================================================
+# Dockerfile.falco
+# Tool    : Falco 1.2.5
+# Author  : de Sena Brandine & Smith (USC Smith Lab)
+# License : GPL-3.0
+# Purpose : Quality control of raw sequencing reads (FastQC drop-in, C++)
+# =============================================================================
+#
+# BIOLOGICAL CONTEXT
+# ------------------
+# Falco is a C++ reimplementation of FastQC. It produces identical reports
+# (HTML + data.txt) covering the same ten QC modules: per-base quality,
+# per-sequence quality, sequence content, GC content, N content, length
+# distribution, duplication levels, overrepresented sequences, adapter
+# content, and k-mer content.
+#
+# WHY FALCO INSTEAD OF FASTQC?
+# -----------------------------
+# FastQC is a Java program launched via a shell wrapper. The JVM startup
+# overhead and single-threaded design make it slow on large files (WES/WGS).
+# Falco reimplements the same logic in C++ with a single-pass design:
+# it reads the FASTQ once and collects all module data simultaneously,
+# whereas FastQC reads the file multiple times (one pass per module).
+#
+# Published benchmark (de Sena Brandine & Smith, F1000Research 2021):
+#   WGS 30x (90 Gb)  : FastQC ~45 min  vs Falco ~14 min  (~3x speedup)
+#   WES 100x (8 Gb)  : FastQC ~4 min   vs Falco ~80 s    (~3x speedup)
+#   Peak RAM         : FastQC ~1.5 Gb  vs Falco ~200 Mb  (~7x reduction)
+#
+# Output files are named differently from FastQC (fastqc_report.html,
+# fastqc_data.txt, summary.txt) but MultiQC recognises them natively.
+#
+# WHY ubuntu:22.04 AS builder?
+# -----------------------------
+# Falco is compiled from source. We use a multi-stage build:
+#   Stage 1 (builder): installs build tools + compiles Falco
+#   Stage 2 (runtime): copies only the binary + config files
+# This keeps the final image small (~80 Mb) without the compiler toolchain.
+#
+# DEPENDENCIES
+# ------------
+#   zlib   : required to read gzip-compressed FASTQ files
+#   htslib : required to read BAM files (optional but included for completeness)
+#   autoconf/automake/make/g++ : build tools, discarded after compilation
+# =============================================================================
+
+# ── Stage 1 : compilation ────────────────────────────────────────────────────
+FROM ubuntu:22.04 AS builder
+
+ARG FALCO_VERSION=1.2.5
+
+# Build dependencies only — all discarded in stage 2
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        wget \
+        ca-certificates \
+        unzip \
+        g++ \
+        make \
+        autoconf \
+        automake \
+        zlib1g-dev \
+        libbz2-dev \
+        liblzma-dev \
+        libcurl4-openssl-dev \
+        libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download Falco release archive
+# NOTE: do NOT use GitHub's auto-generated "Source code" archives — they are
+# incomplete (missing the configure script). Use the versioned release tarballs.
+RUN wget --no-verbose \
+        --no-check-certificate \
+        -O /tmp/falco.tar.gz \
+        "https://github.com/smithlabcode/falco/releases/download/v${FALCO_VERSION}/falco-${FALCO_VERSION}.tar.gz" && \
+    tar -xzf /tmp/falco.tar.gz -C /tmp && \
+    cd /tmp/falco-${FALCO_VERSION} && \
+    ./configure CXXFLAGS="-O3 -Wall" --prefix=/opt/falco && \
+    make -j$(nproc) && \
+    make install && \
+    rm -rf /tmp/falco.tar.gz /tmp/falco-${FALCO_VERSION}
+
+# ── Stage 2 : runtime ────────────────────────────────────────────────────────
+FROM ubuntu:22.04
+
+LABEL org.opencontainers.image.title="Falco" \
+      org.opencontainers.image.version="1.2.5" \
+      org.opencontainers.image.description="FastQC drop-in replacement in C++ for QC of sequencing reads" \
+      org.opencontainers.image.url="https://github.com/smithlabcode/falco" \
+      org.opencontainers.image.licenses="GPL-3.0"
+
+# Runtime dependencies only (no compiler)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        zlib1g \
+        libbz2-1.0 \
+        liblzma5 \
+        libcurl4 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the compiled binary and configuration files from the builder stage
+COPY --from=builder /opt/falco /opt/falco
+
+# Symlink to PATH
+RUN ln -s /opt/falco/bin/falco /usr/local/bin/falco
+
+WORKDIR /data
+
+CMD ["falco", "--version"]
