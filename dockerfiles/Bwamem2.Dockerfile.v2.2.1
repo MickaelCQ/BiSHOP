@@ -1,0 +1,24 @@
+# Stage 1: Build BWA-MEM2 + Samtools
+FROM ubuntu:22.04 AS builder
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential wget zlib1g-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libncurses5-dev ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+
+RUN wget --no-check-certificate https://github.com/bwa-mem2/bwa-mem2/releases/download/v2.2.1/bwa-mem2-2.2.1_x64-linux.tar.bz2 && \
+    tar -xjf bwa-mem2-2.2.1_x64-linux.tar.bz2
+
+RUN wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.19/samtools-1.19.tar.bz2 && \
+    tar -xjf samtools-1.19.tar.bz2 && \
+    cd samtools-1.19 && ./configure --prefix=/usr/local && make -j4 && make install
+
+# Stage 2: Runtime minimal (libcurl3-gnutls inclus pour samtools)
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    zlib1g libbz2-1.0 liblzma5 libcurl3-gnutls libncurses6 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=builder /build/bwa-mem2-2.2.1_x64-linux/bwa-mem2* /usr/local/bin/
+COPY --from=builder /usr/local/bin/samtools /usr/local/bin/samtools
+CMD ["/bin/bash"]

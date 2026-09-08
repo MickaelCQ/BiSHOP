@@ -1,0 +1,2 @@
+sample,patient,activity,bed_file,fastq_1,fastq_2,bam,bai
+0810281334,P_0810281334,SLA,/NFS/cluster-share/home/mcoquerelle/Explorations/bioresources/RefSeq_hg38_CDS_neutral_canonical.bed,/NFS/cluster-share/projects/WES/fastq/NS2000_046_21_03_2025_ILLUMINA/0810281334_S4_R1_001.fastq.gz,/NFS/cluster-share/projects/WES/fastq/NS2000_046_21_03_2025_ILLUMINA/0810281334_S4_R2_001.fastq.gz,,

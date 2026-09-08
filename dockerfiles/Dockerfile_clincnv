@@ -1,0 +1,3 @@
+FROM deepb2106/clincnv:latest
+COPY --from=euformatics/decon:v1.4 /usr/bin/bedtools /usr/local/bin/bedtools
+CMD ["/bin/bash"]

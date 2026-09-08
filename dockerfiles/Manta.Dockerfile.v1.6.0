@@ -1,0 +1,18 @@
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+# On installe uniquement python2 et wget (5 Mo au lieu de 290 Mo)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python2 wget ca-certificates && \
+    ln -s /usr/bin/python2 /usr/bin/python && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt
+
+# Manta 1.6.0 (Binaires pré-compilés par Illumina)
+RUN wget --no-check-certificate https://github.com/Illumina/manta/releases/download/v1.6.0/manta-1.6.0.centos6_x86_64.tar.bz2 && \
+    tar -xjf manta-1.6.0.centos6_x86_64.tar.bz2 && \
+    rm manta-1.6.0.centos6_x86_64.tar.bz2
+
+ENV PATH="/opt/manta-1.6.0.centos6_x86_64/bin:${PATH}"
+CMD ["/bin/bash"]

@@ -1,0 +1,2 @@
+sample,patient,activity,bed_file,fastq_1,fastq_2,bam,bai
+2006081825,P_2006081825,SLA,/NFS/cluster-share/home/mcoquerelle/Explorations/bioresources/RefSeq_hg38_CDS_neutral_canonical.bed,/mnt/ngs_ns2000/VH02532/RUNS/260821_VH02532_3_AAJJ2HJM5/Analysis/1/Data/fastq/2006081825_S8_R1_001.fastq.gz,/mnt/ngs_ns2000/VH02532/RUNS/260821_VH02532_3_AAJJ2HJM5/Analysis/1/Data/fastq/2006081825_S8_R2_001.fastq.gz,,

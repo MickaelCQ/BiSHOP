@@ -1,0 +1,19 @@
+# Stage 1: Compilation
+FROM ubuntu:22.04 AS builder
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential wget zlib1g-dev libisal-dev libdeflate-dev ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+RUN wget --no-check-certificate https://github.com/OpenGene/fastp/archive/refs/tags/v0.23.4.tar.gz && \
+    tar -xzf v0.23.4.tar.gz && \
+    cd fastp-0.23.4 && make -j4
+
+# Stage 2: Runtime minimal
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    zlib1g libisal2 libdeflate0 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=builder /build/fastp-0.23.4/fastp /usr/local/bin/fastp
+CMD ["/bin/bash"]

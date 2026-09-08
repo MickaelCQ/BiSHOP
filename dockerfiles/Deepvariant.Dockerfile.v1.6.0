@@ -1,0 +1,7 @@
+# ==============================================================================
+# BiSHOP V2 — Google DeepVariant 1.6.0 
+# ==============================================================================
+FROM google/deepvariant:1.6.0
+LABEL maintainer="Bioinformatique CHU"
+LABEL description="Google DeepVariant 1.6.0 pour le pipeline BiSHOP V2"
+CMD ["/bin/bash"]

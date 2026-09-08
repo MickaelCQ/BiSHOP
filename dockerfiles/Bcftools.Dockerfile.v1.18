@@ -1,0 +1,19 @@
+# Stage 1: Build
+FROM ubuntu:22.04 AS builder
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential wget zlib1g-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+RUN wget --no-check-certificate https://github.com/samtools/bcftools/releases/download/1.18/bcftools-1.18.tar.bz2 && \
+    tar -xjf bcftools-1.18.tar.bz2 && \
+    cd bcftools-1.18 && ./configure --prefix=/usr/local && make -j4 && make install
+
+# Stage 2: Runtime minimal
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    zlib1g libbz2-1.0 liblzma5 libcurl3-gnutls ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/local/bin/bcftools /usr/local/bin/bcftools
+CMD ["/bin/bash"]

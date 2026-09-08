@@ -1,0 +1,5 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+unable to prepare context: unable to evaluate symlinks in Dockerfile path: lstat /NFS/cluster-share/home/mcoquerelle/Exome/BiSHOP_V2/dockerfiles/dockerfiles: no such file or directory

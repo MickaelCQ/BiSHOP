@@ -1,0 +1,3 @@
+FROM bishop/cnvkit:0.9.10
+COPY freebayes /usr/local/bin/freebayes
+CMD ["/bin/bash"]

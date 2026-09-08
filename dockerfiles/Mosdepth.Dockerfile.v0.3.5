@@ -1,0 +1,17 @@
+# Stage 1: Downloader
+FROM ubuntu:22.04 AS downloader
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /opt
+RUN wget --no-check-certificate https://github.com/brentp/mosdepth/releases/download/v0.3.5/mosdepth && \
+    chmod +x mosdepth
+
+# Stage 2: Runtime minimal
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    zlib1g libbz2-1.0 liblzma5 libcurl4 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=downloader /opt/mosdepth /usr/local/bin/mosdepth
+CMD ["/bin/bash"]

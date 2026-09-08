@@ -1,0 +1,13 @@
+# Stage 1: Compilation
+FROM ubuntu:22.04 AS builder
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends     build-essential wget zlib1g-dev libbz2-dev libhts-dev ca-certificates &&     rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+RUN wget --no-check-certificate https://github.com/smithlabcode/falco/releases/download/v1.2.5/falco-1.2.5.tar.gz &&     tar -xzf falco-1.2.5.tar.gz &&     cd falco-1.2.5 &&     ./configure && make -j4
+
+# Stage 2: Runtime minimal
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends     zlib1g libbz2-1.0 libhts3 ca-certificates &&     rm -rf /var/lib/apt/lists/*
+COPY --from=builder /build/falco-1.2.5/falco /usr/local/bin/falco
+CMD ["/bin/bash"]

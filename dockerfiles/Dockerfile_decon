@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /opt
+
+# Téléchargement des sources de DECoN depuis GitHub
+RUN wget --no-check-certificate https://github.com/RahmanTeam/DECoN/archive/refs/heads/master.tar.gz && \
+    tar -xzf master.tar.gz && \
+    mv DECoN-master DECoN && \
+    rm master.tar.gz
+
+# Installation de R et des packages requis (ExomeDepth, optparse, etc.)
+RUN wget --no-check-certificate -qO- https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba && \
+    ./bin/micromamba create -y -n decon -c conda-forge -c bioconda -c defaults \
+        r-base=4.2 \
+        r-optparse \
+        r-vgam \
+        bioconductor-exomedepth \
+        bioconductor-genomicranges \
+        bioconductor-rsamtools \
+        bioconductor-biostrings \
+        samtools \
+        bwa && \
+    ./bin/micromamba clean --all --yes
+
+ENV PATH="/opt/bin:/opt/DECoN:/opt/micromamba/envs/decon/bin:${PATH}"
+ENV CONDA_PREFIX="/opt/micromamba/envs/decon"
+
+CMD ["/bin/bash"]

@@ -1,0 +1,31 @@
+# Nextflow intermediate files & cache
+.nextflow/
+.nextflow.log*
+work/
+
+# Pipeline execution outputs & results
+results*/
+
+# Heavy data & archives
+*.tar.gz
+*.tar
+*.zip
+*.gz
+*.sif
+*.bam
+*.bai
+*.cram
+*.crai
+*.fastq
+*.fq
+
+# R temporary sessions
+.RData
+.Rhistory
+sample_names.RData
+
+# System & Editor files
+.DS_Store
+*~
+*.swp
+dockerfiles/freebayes
