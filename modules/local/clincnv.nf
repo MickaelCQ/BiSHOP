@@ -1,6 +1,6 @@
 /*
     Reference: ClinCNV (Fugmann et al., 2020, Bioinformatics / Nature Communications, DOI: 10.1101/634048)
-    Mode: Analyse multi-échantillons / Cohorte
+    Rôle : Détection des CNVs germinaux normalisés sur la cohorte complète des échantillons.
 */
 process CLINCNV {
     tag "Cohort (${bams.size()} samples)"
@@ -23,15 +23,13 @@ process CLINCNV {
     export R_LIBS_USER=""
     export PATH="/usr/local/bin:\$PATH"
 
-    # 1. Préparation du BED strict à 5 colonnes (chr start end GC genes)
+    # 1. Construction du BED à 5 colonnes strictes requises par ClinCNV (chr, start, end, GC, gènes)
     /usr/local/bin/bedtools nuc -fi ${fasta} -bed ${bed} | \
         awk 'NR>1 {print \$1"\t"\$2"\t"\$3"\t"\$5"\t"\$4}' > clincnv_targets.bed
 
-    # 2. Construction de la matrice de couverture multi-échantillons (Cohorte)
-    # Initialisation avec les colonnes chr, start, end
+    # 2. Construction de la matrice de couverture multi-colonnes de la cohorte
     awk '{print \$1"\t"\$2"\t"\$3}' clincnv_targets.bed > cohort_cov.tmp
 
-    # Ajout de la colonne de couverture pour chaque BAM de la cohorte
     sample_headers="chr\tstart\tend"
     for bam in ${bams}; do
         sname=\$(basename "\$bam" .markdup.bam)
@@ -46,12 +44,11 @@ process CLINCNV {
         mv cohort_cov.tmp2 cohort_cov.tmp
     done
 
-    # Ajout de l'en-tête officiel
     echo -e "\${sample_headers}" > cohort_normal.cov
     cat cohort_cov.tmp >> cohort_normal.cov
     rm -f cohort_cov.tmp *.col
 
-    # 3. Exécution de ClinCNV sur la cohorte complète
+    # 3. Exécution avec chemins absolus
     COV_PATH=\$(pwd)/cohort_normal.cov
     BED_PATH=\$(pwd)/clincnv_targets.bed
     OUT_PATH=\$(pwd)/clincnv_cohort_out
@@ -62,10 +59,16 @@ process CLINCNV {
         --out \${OUT_PATH} \\
         --folderWithScript /opt/clincnv \\
         --colNum 4 \\
+        # Indique que les données d'échantillons commencent à la colonne 4.
         --hg38 \\
+        # Active les coordonnées génétiques hg38.
+        --scoreG 20 \\
+        # Seuil minimal de significativité statistique pour les variants germinaux (p-value ajustée).
+        --lengthG 2 \\
+        # Longueur minimale : exige au moins 2 exons consécutifs pour déclarer un CNV haute confiance.
         --numberOfThreads ${task.cpus}
 
-    # 4. Récupération des résultats TSV et VCF de la cohorte
+    # 4. Sauvegarde des résultats tabulés et VCF
     if ls \${OUT_PATH}/*_cnvs.tsv 1> /dev/null 2>&1; then
         cp \${OUT_PATH}/*_cnvs.tsv .
     fi
