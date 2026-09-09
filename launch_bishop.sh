@@ -96,6 +96,7 @@ if [[ ! -f "${INPUT_CSV}" ]]; then
 fi
 
 # Création du sous-dossier dédié à la traçabilité Nextflow
+chmod -R u+rwX "${OUTDIR}" 2>/dev/null || true
 INFO_DIR="${OUTDIR}/pipeline_info"
 mkdir -p "${INFO_DIR}"
 
