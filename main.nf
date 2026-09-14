@@ -64,7 +64,7 @@ workflow {
         .join( CALL_VARIANTS_WF.out.gatk_vcf, by: 0 )
         .join( CALL_VARIANTS_WF.out.freebayes_vcf, by: 0 )
 
-    BCFTOOLS_CONSENSUS ( ch_snv_to_merge )
+    BCFTOOLS_CONSENSUS ( ch_snv_to_merge, file(params.fasta) )
 
     // 6. Annotation VEP
     VEP ( BCFTOOLS_CONSENSUS.out.vcf_tbi, file(params.vep_cache), file(params.fasta) )

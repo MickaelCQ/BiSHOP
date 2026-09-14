@@ -2,6 +2,7 @@
 .nextflow/
 .nextflow.log*
 work/
+legacy_panels/
 
 # Pipeline execution outputs & results
 results*/
@@ -29,3 +30,8 @@ sample_names.RData
 *~
 *.swp
 dockerfiles/freebayes
+result*/
+.nfs*
+*.txt
+!*README*
+!*metrics.txt
