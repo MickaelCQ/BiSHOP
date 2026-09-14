@@ -1,6 +1,6 @@
 /*
     Reference: DECoN / ExomeDepth (Fowler et al., 2016, Wellcome Open Res, DOI: 10.12688/wellcomeopenres.10069.1)
-    Rôle : Détection fine des CNVs exoniques par agrégation des échantillons les plus corrélés de la série.
+    Mode: Analyse multi-échantillons / Cohorte
 */
 process DECON {
     tag "Cohort (${bams.size()} samples)"
@@ -24,7 +24,7 @@ process DECON {
     export HOME=/tmp
     export R_LIBS_USER=""
 
-    # Garde-fou méthodologique : ExomeDepth a besoin d'au moins 3 échantillons pour bâtir son modèle de régression
+    # Garde-fou méthodologique
     nb_samples=\$(echo "${bams_list}" | tr ',' '\n' | wc -l)
     if [ "\${nb_samples}" -lt 3 ]; then
         echo "[INFO CLINIQUE] DECoN nécessite >= 3 échantillons. Série actuelle : \${nb_samples}. Étape ignorée."
@@ -42,7 +42,6 @@ process DECON {
         ${bed} \\
         ${bais_list} \\
         0.01 \\
-        # trans_prob = 0.01 : Probabilité de transition du modèle de Markov caché (HMM) entre état normal et altéré.
         gc_content.tsv
 
     mv DECoN_output.csv cohort.decon.csv 2>/dev/null || true
@@ -53,7 +52,11 @@ process DECON {
         for f in *.txt; do
             if [ -s "\$f" ]; then
                 sample=\$(basename "\$f" .txt)
-                cat "\$f" | bgzip -c > "\${sample}.decon.vcf.gz"
+                if command -v bgzip &> /dev/null; then
+                    cat "\$f" | bgzip -c > "\${sample}.decon.vcf.gz"
+                else
+                    cat "\$f" | gzip -c > "\${sample}.decon.vcf.gz"
+                fi
             fi
         done
     fi

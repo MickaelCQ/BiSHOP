@@ -1,6 +1,6 @@
 /*
     Reference: ClinCNV (Fugmann et al., 2020, Bioinformatics / Nature Communications, DOI: 10.1101/634048)
-    Rôle : Détection des CNVs germinaux normalisés sur la cohorte complète des échantillons.
+    Mode: Analyse multi-échantillons / Cohorte
 */
 process CLINCNV {
     tag "Cohort (${bams.size()} samples)"
@@ -14,8 +14,10 @@ process CLINCNV {
     path fasta_fai
 
     output:
-    path "*.clincnv.tsv", emit: tsv, optional: true
-    path "*.vcf.gz",      emit: vcf, optional: true
+    path "*_cnvs.tsv",                   emit: tsv
+    path "*_cnvs.seg",                   emit: seg, optional: true
+    path "*.png",                        emit: png, optional: true
+    path "ontargetNormal.summary.xls",   emit: xls, optional: true
 
     script:
     """
@@ -23,11 +25,11 @@ process CLINCNV {
     export R_LIBS_USER=""
     export PATH="/usr/local/bin:\$PATH"
 
-    # 1. Construction du BED à 5 colonnes strictes requises par ClinCNV (chr, start, end, GC, gènes)
+    # 1. Construction du BED 5 colonnes (chr, start, end, GC, genes)
     /usr/local/bin/bedtools nuc -fi ${fasta} -bed ${bed} | \
         awk 'NR>1 {print \$1"\t"\$2"\t"\$3"\t"\$5"\t"\$4}' > clincnv_targets.bed
 
-    # 2. Construction de la matrice de couverture multi-colonnes de la cohorte
+    # 2. Construction de la matrice de couverture de la cohorte
     awk '{print \$1"\t"\$2"\t"\$3}' clincnv_targets.bed > cohort_cov.tmp
 
     sample_headers="chr\tstart\tend"
@@ -48,7 +50,7 @@ process CLINCNV {
     cat cohort_cov.tmp >> cohort_normal.cov
     rm -f cohort_cov.tmp *.col
 
-    # 3. Exécution avec chemins absolus
+    # 3. Exécution de ClinCNV
     COV_PATH=\$(pwd)/cohort_normal.cov
     BED_PATH=\$(pwd)/clincnv_targets.bed
     OUT_PATH=\$(pwd)/clincnv_cohort_out
@@ -59,24 +61,15 @@ process CLINCNV {
         --out \${OUT_PATH} \\
         --folderWithScript /opt/clincnv \\
         --colNum 4 \\
-        # Indique que les données d'échantillons commencent à la colonne 4.
         --hg38 \\
-        # Active les coordonnées génétiques hg38.
         --scoreG 20 \\
-        # Seuil minimal de significativité statistique pour les variants germinaux (p-value ajustée).
         --lengthG 2 \\
-        # Longueur minimale : exige au moins 2 exons consécutifs pour déclarer un CNV haute confiance.
         --numberOfThreads ${task.cpus}
 
-    # 4. Sauvegarde des résultats tabulés et VCF
-    if ls \${OUT_PATH}/*_cnvs.tsv 1> /dev/null 2>&1; then
-        cp \${OUT_PATH}/*_cnvs.tsv .
-    fi
-    for f in \${OUT_PATH}/*.vcf; do
-        if [ -s "\$f" ]; then
-            bgzip -c "\$f" > "\$(basename "\$f").gz"
-            tabix -p vcf "\$(basename "\$f").gz" 2>/dev/null || true
-        fi
-    done
+    # 4. Publication de TOUS les TSV, SEG, PNG et XLS
+    find \${OUT_PATH}/normal/ -name "*_cnvs.tsv" -exec cp {} . \\;
+    find \${OUT_PATH}/normal/ -name "*_cnvs.seg" -exec cp {} . \\;
+    cp \${OUT_PATH}/ontargetNormal.summary.xls . 2>/dev/null || true
+    cp \${OUT_PATH}/*.png . 2>/dev/null || true
     """
 }

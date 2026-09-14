@@ -1,9 +1,9 @@
 /*
     Reference: Ensembl VEP (McLaren et al., 2016, Genome Biology, DOI: 10.1186/s13059-016-0974-4)
-    Rôle : Annotation fonctionnelle, HGVS, transcrits canoniques et stats MultiQC.
+    Rôle : Annotation clinique de haute précision (conserve CALLERS, NUM_CALLERS, HGVS, gènes).
 */
 process VEP {
-    tag "$meta.id ($meta.activity)"
+    tag "$meta.id ($meta.var_type)"
     publishDir path: { "${params.outdir}/annotated_reports" }, mode: 'copy'
 
     input:
@@ -17,16 +17,9 @@ process VEP {
 
     script:
     """
-    # Options VEP :
-    # --offline : Mode 100% hors-ligne sur cache local
-    # --hgvs : Nomenclature HGVS officielle (c. et p.)
-    # --symbol : Nom de gène HUGO
-    # --canonical : Identifie le transcrit de référence
-    # --clin_sig_allele 1 : Conserve la pathogénicité ClinVar
-    # --stats_text : Rapport texte tabulé pour MultiQC
     vep \\
         -i ${vcf} \\
-        -o ${meta.id}.${meta.activity}.vep.vcf.gz \\
+        -o ${meta.id}.${meta.var_type}.vep.vcf.gz \\
         --compress_output bgzip \\
         --format vcf --vcf \\
         --fork ${task.cpus} \\
@@ -40,7 +33,7 @@ process VEP {
         --biotype \\
         --numbers \\
         --clin_sig_allele 1 \\
-        --stats_file ${meta.id}.${meta.activity}_summary.txt \\
+        --stats_file ${meta.id}.${meta.var_type}_summary.txt \\
         --stats_text
     """
 }
