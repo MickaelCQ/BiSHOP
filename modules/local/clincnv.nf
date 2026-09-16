@@ -4,7 +4,7 @@
 */
 process CLINCNV {
     tag "Cohort (${bams.size()} samples)"
-    publishDir path: { "${params.outdir}/vcfs/clincnv" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/clincnv" }, mode: 'copy', overwrite: true
 
     input:
     path bams

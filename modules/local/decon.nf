@@ -4,7 +4,7 @@
 */
 process DECON {
     tag "Cohort (${bams.size()} samples)"
-    publishDir path: { "${params.outdir}/vcfs/decon" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/decon" }, mode: 'copy', overwrite: true
 
     input:
     path bams
@@ -24,7 +24,6 @@ process DECON {
     export HOME=/tmp
     export R_LIBS_USER=""
 
-    # Garde-fou méthodologique
     nb_samples=\$(echo "${bams_list}" | tr ',' '\n' | wc -l)
     if [ "\${nb_samples}" -lt 3 ]; then
         echo "[INFO CLINIQUE] DECoN nécessite >= 3 échantillons. Série actuelle : \${nb_samples}. Étape ignorée."
@@ -46,17 +45,14 @@ process DECON {
 
     mv DECoN_output.csv cohort.decon.csv 2>/dev/null || true
 
-    # 3. Conversion automatique au format VCF par échantillon
+    # 3. Conversion et normalisation propre des noms VCF
     if [ -f cohort.decon.csv ] && [ -f sample_names.RData ]; then
         Rscript /Rscript/csv2vcf_DECoN.R cohort.decon.csv ${fasta} sample_names.RData
         for f in *.txt; do
             if [ -s "\$f" ]; then
-                sample=\$(basename "\$f" .txt)
-                if command -v bgzip &> /dev/null; then
-                    cat "\$f" | bgzip -c > "\${sample}.decon.vcf.gz"
-                else
-                    cat "\$f" | gzip -c > "\${sample}.decon.vcf.gz"
-                fi
+                sname=\$(basename "\$f" .txt)
+                sname=\$(echo "\$sname" | sed -e 's/\\.markdup\\.bam//g' -e 's/\\.sorted\\.bam//g' -e 's/\\.bam//g')
+                gzip -c "\$f" > "\${sname}.decon.vcf.gz"
             fi
         done
     fi
