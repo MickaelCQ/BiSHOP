@@ -4,7 +4,7 @@
 */
 process MOSDEPTH {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/reports/mosdepth" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/reports/mosdepth" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(bam), path(bai)

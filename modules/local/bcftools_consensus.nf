@@ -5,7 +5,7 @@
 */
 process BCFTOOLS_CONSENSUS {
     tag "$meta.id ($meta.activity)"
-    publishDir path: { "${params.outdir}/vcfs/consensus_activity" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/consensus_activity" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(dv_vcf), path(dv_tbi), path(gatk_vcf), path(gatk_tbi), path(fb_vcf), path(fb_tbi)

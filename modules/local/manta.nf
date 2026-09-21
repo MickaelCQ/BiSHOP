@@ -4,7 +4,7 @@
 */
 process MANTA {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/vcfs/manta" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/manta" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(bam), path(bai)

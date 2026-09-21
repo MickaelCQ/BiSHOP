@@ -4,7 +4,7 @@
 */
 process CONSENSUS_CNV {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/vcfs/consensus_cnv" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/consensus_cnv" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(cnvkit_vcf), path(clincnv_tsv), path(decon_vcf)

@@ -2,7 +2,7 @@
     Reference: MultiQC (Ewels et al., 2016, Bioinformatics, DOI: 10.1093/bioinformatics/btw354)
 */
 process MULTIQC {
-    publishDir path: { "${params.outdir}/reports/multiqc" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/reports/multiqc" }, mode: 'link', overwrite: true
 
     input:
     path qc_files

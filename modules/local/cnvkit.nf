@@ -4,7 +4,7 @@
 */
 process CNVKIT {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/vcfs/cnvkit" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/cnvkit" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(bam), path(bai)

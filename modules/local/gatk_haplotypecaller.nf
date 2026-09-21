@@ -4,7 +4,7 @@
 */
 process GATK_HAPLOTYPECALLER {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/vcfs/gatk" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/gatk" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(bam), path(bai)

@@ -4,7 +4,7 @@
 */
 process FREEBAYES {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/vcfs/freebayes" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/vcfs/freebayes" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(bam), path(bai)

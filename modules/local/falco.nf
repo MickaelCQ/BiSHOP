@@ -3,7 +3,7 @@
 */
 process FALCO {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/reports/falco/${meta.id}" }, mode: 'copy'
+    publishDir path: { "${params.outdir}/reports/falco/${meta.id}" }, mode: 'link', overwrite: true
 
     input:
     tuple val(meta), path(reads)

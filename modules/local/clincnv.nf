@@ -29,28 +29,28 @@ process CLINCNV {
     /usr/local/bin/bedtools nuc -fi ${fasta} -bed ${bed} | \
         awk 'NR>1 {print \$1"\t"\$2"\t"\$3"\t"\$5"\t"\$4}' > clincnv_targets.bed
 
-    # 2. Construction de la matrice de couverture de la cohorte
-    awk '{print \$1"\t"\$2"\t"\$3}' clincnv_targets.bed > cohort_cov.tmp
-
-    sample_headers="chr\tstart\tend"
+    # 2. Construction robuste de la ligne d'en-tête (100% Tabulations via printf)
+    printf "chr\tstart\tend" > header.tsv
     for bam in ${bams}; do
-        sname=\$(basename "\$bam" .markdup.bam)
-        sname=\$(basename "\$sname" .sorted.bam)
-        sname=\$(basename "\$sname" .bam)
-        sample_headers="\${sample_headers}\t\${sname}"
-        
+        sname=\$(basename "\$bam" .markdup.bam | sed -e 's/\\.sorted//g' -e 's/\\.bam//g')
+        printf "\t%s" "\$sname" >> header.tsv
+    done
+    printf "\n" >> header.tsv
+
+    # 3. Construction des colonnes de données avec paste (tabulations)
+    awk '{print \$1"\t"\$2"\t"\$3}' clincnv_targets.bed > cohort_cov.tmp
+    for bam in ${bams}; do
         /usr/local/bin/bedtools coverage -a ${bed} -b "\$bam" -mean | \
-            awk '{print \$NF}' > "\${sname}.col"
-        
-        paste cohort_cov.tmp "\${sname}.col" > cohort_cov.tmp2
+            awk '{print \$NF}' > col.tmp
+        paste cohort_cov.tmp col.tmp > cohort_cov.tmp2
         mv cohort_cov.tmp2 cohort_cov.tmp
     done
 
-    echo -e "\${sample_headers}" > cohort_normal.cov
-    cat cohort_cov.tmp >> cohort_normal.cov
-    rm -f cohort_cov.tmp *.col
+    # Assemblage final de la matrice
+    cat header.tsv cohort_cov.tmp > cohort_normal.cov
+    rm -f header.tsv cohort_cov.tmp col.tmp
 
-    # 3. Exécution de ClinCNV
+    # 4. Exécution de ClinCNV
     COV_PATH=\$(pwd)/cohort_normal.cov
     BED_PATH=\$(pwd)/clincnv_targets.bed
     OUT_PATH=\$(pwd)/clincnv_cohort_out
@@ -66,7 +66,7 @@ process CLINCNV {
         --lengthG 2 \\
         --numberOfThreads ${task.cpus}
 
-    # 4. Publication de TOUS les TSV, SEG, PNG et XLS
+    # 5. Publication de TOUS les TSV, SEG, PNG et XLS
     find \${OUT_PATH}/normal/ -name "*_cnvs.tsv" -exec cp {} . \\;
     find \${OUT_PATH}/normal/ -name "*_cnvs.seg" -exec cp {} . \\;
     cp \${OUT_PATH}/ontargetNormal.summary.xls . 2>/dev/null || true

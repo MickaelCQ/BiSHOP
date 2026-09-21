@@ -4,7 +4,7 @@
 */
 process DECON {
     tag "Cohort (${bams.size()} samples)"
-    publishDir path: { "${params.outdir}/vcfs/decon" }, mode: 'copy', overwrite: true
+    publishDir path: { "${params.outdir}/vcfs/decon" }, mode: 'link', overwrite: true
 
     input:
     path bams

@@ -4,7 +4,7 @@
 */
 process FASTP {
     tag "$meta.id"
-    publishDir path: { "${params.outdir}/reports/fastp/${meta.id}" }, mode: 'copy', pattern: '*.{html,json}'
+    publishDir path: { "${params.outdir}/reports/fastp/${meta.id}" }, mode: 'link', overwrite: true, pattern: '*.{html,json}'
 
     input:
     tuple val(meta), path(reads)

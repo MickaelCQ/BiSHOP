@@ -36,7 +36,7 @@ process VEP {
     #    --offline         : Mode 100% hors-ligne interdisant toute requête HTTP vers l'extérieur.
     #    --assembly GRCh38 : Fixe l'assemblage génomique sur la version hg38.
     #
-    # 3. LE SUPER-DRAPEAU CLINIQUE --everything (ACTIVATION DES STANDARDS INTERNATIONAUX) :
+    # 3. LE DRAPEAU CLINIQUE --everything (ACTIVATION DES STANDARDS INTERNATIONAUX) :
     #    --symbol          : Ajoute le symbole officiel du gène HUGO/HGNC (ex: FBN1, SOD1, FUS).
     #    --hgvs            : Calcule les nomenclatures internationales HGVS ADN (c.) et protéine (p.).
     #    --canonical       : Identifie le transcrit de référence médical de chaque gène.
@@ -74,7 +74,7 @@ process VEP {
         --assembly GRCh38 \\
         --everything \\
         --custom ${params.clinvar},ClinVar,vcf,exact,0,CLNSIG,CLNREVSTAT,CLNDN \\
-        --custom ${params.alphamissense},AlphaMissense,bed,exact,0,am_pathogenicity,am_class \\
+        --custom ${params.alphamissense},AlphaMissense,vcf,exact,0,am_pathogenicity,am_class \
         --plugin REVEL,file=${params.revel} \\
         --clin_sig_allele 1 \\
         --stats_file ${meta.id}.${meta.activity}_summary.txt \\
